@@ -4,6 +4,7 @@ pipeline {
 
     environment {
         PULUMI_STACK_BUCKET = "tplt-web-spa-pulumi?region=eu-west-2"
+        AZURE_STORAGE_CONNECTION_STRING = "<access-key>"
 
         // can use "pulumi stack -Q" to find this
         PULUMI_STACK = "organization/tplt-web-spa/dev"
@@ -102,7 +103,8 @@ pipeline {
 
                     withCredentials([aws(credentialsId: "AWS_CREDENTIALS")]){
                         withEnv(["PATH+PULUMI=$HOME/.pulumi/bin"]) {
-                            sh "pulumi login 's3://${PULUMI_STACK_BUCKET}'"
+                            sh "export AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}'"
+                            sh "pulumi login"
                             dir("iac") {
                                 sh "npm i"
                                 sh "pulumi stack select ${PULUMI_STACK}"

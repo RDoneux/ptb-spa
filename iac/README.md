@@ -1,0 +1,6 @@
+## Set up
+### Logging into Pulumi state backend
+export AZURE_STORAGE_CONNECTION_STRING="<connection-string>"
+
+## Links:
+[Details on deploying a static website on Azure using Pulumi](https://www.pulumi.com/blog/hosting-a-static-website-on-azure-with-pulumi/)

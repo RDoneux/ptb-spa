@@ -1,7 +1,6 @@
-encryptionsalt: v1:q6wT0nE6Ni0=:v1:YiR1Q0GoIZa2yfdR:DcnjDCNzd7Gyz3dhyGZIc2lPLoC7Ig==
+encryptionsalt: v1:MDQ/yT+ZK9M=:v1:MchGCbW4barD/nYe:x4qbtF7xcw4hRuLAEGR7yyoMaI8MOQ==
 config:
-  aws:region: eu-west-2
-  tplt-web-spa:projectname: tplt
-  tplt-web-spa:servicename: web-spa
-  tplt-web-spa:hostedZone: robertdoneux.co.uk
-  tplt-web-spa:subDomain: test.robertdoneux.co.uk
+  azure:location: UKSouth
+  azure:subscriptionId: 4acdbe90-96df-4eeb-b909-069454b47fd3
+  ptb-spa-iac:prefix: ptb-dev
+  ptb-spa-iac:endpoint: ptb-dev
