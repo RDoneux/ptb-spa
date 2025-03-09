@@ -98,7 +98,6 @@ pipeline {
                     script {
                         def packageJson = readJSON(file: 'package.json')
                         env.VERSION = packageJson.version 
-                        echo "Extracted version: ${env.VERSION}" // ✅ Debugging log
                         sh "docker build -t $DOCKER_IMAGE:v${env.VERSION} ."
                     }
                     withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIALS', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
@@ -108,7 +107,7 @@ pipeline {
                 }
                 post {
                     always {
-                        sh "docker rmi $DOCKER_IMAGE:v${env.VERSION} || true" // ✅ Now works!                   
+                        sh "docker rmi $DOCKER_IMAGE:v${env.VERSION} || true"                   
                     } 
                 }
             }
