@@ -3,11 +3,12 @@ pipeline {
     agent any
 
     environment {
-        PULUMI_STACK_BUCKET = "tplt-web-spa-pulumi?region=eu-west-2"
-        AZURE_STORAGE_CONNECTION_STRING = "<access-key>"
+        DOCKER_IMAGE = 'rdoneux/ptb-spa'
 
         // can use "pulumi stack -Q" to find this
-        PULUMI_STACK = "organization/tplt-web-spa/dev"
+        PULUMI_STACK = "organization/ptb-spa-iac/dev"
+        PULUMI_STATE_CONTAINER = "pulumi-state"
+        PULUMI_STATE_ACCOUNT = "ptbpulumi"
     }
 
     stages {
@@ -80,11 +81,37 @@ pipeline {
                 }
                 post {
                     success {
-                        echo "Repot success"
+                        echo "Report success"
                     }
                     failure {
                         echo "Report failure"
                     }
+                }
+            }
+
+            stage ("Publish to Docker Hub") {
+                when {
+                    anyOf{
+                        branch 'master'
+                    }
+                }
+                steps {
+                    script {
+                        def packageJson = readJSON(file: 'package.json')
+                        env.VERSION = packageJson.version
+                        env.IMAGE_TAG = "${env.BRANCH_NAME}-v${env.VERSION}"
+
+                        sh "docker build -t $DOCKER_IMAGE:${env.IMAGE_TAG} ."
+                    }
+                    withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIALS', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                        sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
+                        sh "docker push $DOCKER_IMAGE:${env.IMAGE_TAG}"
+                    }
+                }
+                post {
+                    always {
+                        sh "docker rmi $DOCKER_IMAGE:${env.IMAGE_TAG} || true"                   
+                    } 
                 }
             }
 
@@ -93,27 +120,44 @@ pipeline {
                 when {
                     anyOf {
                         branch 'master';
-                        branch 'development'
                     }
                 }
 
                 steps {
+                    // install pulumi cli
                     sh "curl -fsSL https://get.pulumi.com | sh"
                     sh "$HOME/.pulumi/bin/pulumi version"
 
-                    withCredentials([aws(credentialsId: "AWS_CREDENTIALS")]){
-                        withEnv(["PATH+PULUMI=$HOME/.pulumi/bin"]) {
-                            sh "export AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}'"
-                            sh "pulumi login"
-                            dir("iac") {
-                                sh "npm i"
-                                sh "pulumi stack select ${PULUMI_STACK}"
-                                withCredentials([string(credentialsId: 'PULUMI_ENCRYPTION_KEY', variable: "PULUMI_CONFIG_PASSPHRASE")]) {
-                                    sh "pulumi up --yes"
-                                }
-                            }  
-                        }
 
+                    // Provide service principal login values required for pulumi login and pulumi up
+                    withCredentials([azureServicePrincipal('AZURE_PRINCIPAL_LOGIN')]){
+
+                        // provide pulumi cli on path
+                        withEnv(["PATH+PULUMI=$HOME/.pulumi/bin"]) {
+
+                            // provide the connection string to access the pulumi backend state stored in storaged account
+                            withCredentials([string(credentialsId: 'AZURE_STORAGE_CONNECTION_STRING', variable: "AZURE_STORAGE_CONNECTION_STRING")]) {
+                                sh "pulumi login azblob://$PULUMI_STATE_CONTAINER?storage_account=$PULUMI_STATE_ACCOUNT"
+
+                                dir("iac") {
+                                    sh "npm i"
+                                    sh "pulumi stack select $PULUMI_STACK"
+
+                                    // provide the passphrase to decrypt the pulumi configuration
+                                    withCredentials([string(credentialsId: 'PULUMI_CONFIG_PASSPHRASE', variable: "PULUMI_CONFIG_PASSPHRASE")]) {
+                                        // provide the azure service principal login values required for pulumi up
+                                        withEnv([
+                                            "ARM_CLIENT_ID=${AZURE_CLIENT_ID}",
+                                            "ARM_CLIENT_SECRET=${AZURE_CLIENT_SECRET}",
+                                            "ARM_TENANT_ID=${AZURE_TENANT_ID}",
+                                            "ARM_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"
+                                        ]) {
+                                            sh "pulumi up --yes"
+                                        }
+                                    }
+                                }  
+                            }
+                        }
                     }
                 }
                 post {
