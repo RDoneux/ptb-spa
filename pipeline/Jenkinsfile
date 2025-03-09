@@ -82,7 +82,7 @@ pipeline {
                 }
                 post {
                     success {
-                        echo "Repot success"
+                        echo "Report success"
                     }
                     failure {
                         echo "Report failure"
@@ -96,7 +96,7 @@ pipeline {
                 }
                 steps {
                     script {
-                        def packageJson = readJSON(file: '../package.json')
+                        def packageJson = readJSON(file: 'package.json')
                         env.VERSION = packageJson.version 
                         echo "Extracted version: ${env.VERSION}" // ✅ Debugging log
                         sh "docker build -t $DOCKER_IMAGE:v${env.VERSION} ."
