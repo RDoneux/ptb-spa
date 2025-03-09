@@ -1,13 +1,13 @@
 {
-    "name": "ptb-spa-iac",
-    "main": "index.ts",
-    "devDependencies": {
-        "@types/node": "^18",
-        "typescript": "^5.0.0"
-    },
-    "dependencies": {
-        "@pulumi/azure": "^6.0.0",
-        "@pulumi/pulumi": "^3.113.0",
-        "@pulumi/synced-folder": "^0.11.1"
-    }
+  "name": "ptb-spa-iac",
+  "main": "index.ts",
+  "devDependencies": {
+    "@types/node": "^18",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@pulumi/azure": "^6.0.0",
+    "@pulumi/pulumi": "^3.113.0",
+    "@pulumi/synced-folder": "^0.11.1"
+  }
 }

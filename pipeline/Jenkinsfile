@@ -3,11 +3,12 @@ pipeline {
     agent any
 
     environment {
-        PULUMI_STACK_BUCKET = "tplt-web-spa-pulumi?region=eu-west-2"
+        
+        DOCKER_IMAGE = 'rdoneux/ptb-spa'
         AZURE_STORAGE_CONNECTION_STRING = "<access-key>"
 
         // can use "pulumi stack -Q" to find this
-        PULUMI_STACK = "organization/tplt-web-spa/dev"
+        PULUMI_STACK = "organization/ptb-spa-iac/dev"
     }
 
     stages {
@@ -88,43 +89,64 @@ pipeline {
                 }
             }
 
-            stage ("Deploy") {
-
+            stage ("Publish to Docker Hub") {
                 when {
-                    anyOf {
-                        branch 'master';
-                        branch 'development'
-                    }
+                    branch 'master'
                 }
-
                 steps {
-                    sh "curl -fsSL https://get.pulumi.com | sh"
-                    sh "$HOME/.pulumi/bin/pulumi version"
+                    def packageJson = readJSON(file: '../package.json')
+                    def version = packageJson.version
 
-                    withCredentials([aws(credentialsId: "AWS_CREDENTIALS")]){
-                        withEnv(["PATH+PULUMI=$HOME/.pulumi/bin"]) {
-                            sh "export AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}'"
-                            sh "pulumi login"
-                            dir("iac") {
-                                sh "npm i"
-                                sh "pulumi stack select ${PULUMI_STACK}"
-                                withCredentials([string(credentialsId: 'PULUMI_ENCRYPTION_KEY', variable: "PULUMI_CONFIG_PASSPHRASE")]) {
-                                    sh "pulumi up --yes"
-                                }
-                            }  
-                        }
-
+                    sh "docker build -t $DOCKER_IMAGE:v${version} ." 
+                    withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIALS', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                        sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
+                        sh 'docker push $DOCKER_IMAGE:us-spa'
                     }
                 }
                 post {
-                    success {
-                        echo "Deploy success"
-                    }
-                    failure {
-                        echo "Deploy failure"
-                    }
+                   always {
+                        sh 'docker rmi $DOCKER_IMAGE:tplt-node-spa || true'
+                   } 
                 }
             }
+
+            // stage ("Deploy") {
+
+            //     when {
+            //         anyOf {
+            //             branch 'master';
+            //             // branch 'development'
+            //         }
+            //     }
+
+            //     steps {
+            //         sh "curl -fsSL https://get.pulumi.com | sh"
+            //         sh "$HOME/.pulumi/bin/pulumi version"
+
+            //         withCredentials([aws(credentialsId: "AWS_CREDENTIALS")]){
+            //             withEnv(["PATH+PULUMI=$HOME/.pulumi/bin"]) {
+            //                 sh "export AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}'"
+            //                 sh "pulumi login"
+            //                 dir("iac") {
+            //                     sh "npm i"
+            //                     sh "pulumi stack select ${PULUMI_STACK}"
+            //                     withCredentials([string(credentialsId: 'PULUMI_ENCRYPTION_KEY', variable: "PULUMI_CONFIG_PASSPHRASE")]) {
+            //                         sh "pulumi up --yes"
+            //                     }
+            //                 }  
+            //             }
+
+            //         }
+            //     }
+            //     post {
+            //         success {
+            //             echo "Deploy success"
+            //         }
+            //         failure {
+            //             echo "Deploy failure"
+            //         }
+            //     }
+            // }
         
     }
 
