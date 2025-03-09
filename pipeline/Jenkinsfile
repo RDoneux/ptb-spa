@@ -94,19 +94,20 @@ pipeline {
                     branch 'master'
                 }
                 steps {
-                    def packageJson = readJSON(file: '../package.json')
-                    def version = packageJson.version
-
-                    sh "docker build -t $DOCKER_IMAGE:v${version} ." 
+                    script {
+                        def packageJson = readJSON(file: '../package.json')
+                        env.VERSION = packageJson.version 
+                        sh "docker build -t $DOCKER_IMAGE:v${env.VERSION} ."
+                    }
                     withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIALS', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                         sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
                         sh 'docker push $DOCKER_IMAGE:us-spa'
                     }
                 }
                 post {
-                   always {
-                        sh 'docker rmi $DOCKER_IMAGE:tplt-node-spa || true'
-                   } 
+                    always {
+                        sh "docker rmi $DOCKER_IMAGE:v${env.VERSION} || true" // ✅ Now works!                   
+                    } 
                 }
             }
 
