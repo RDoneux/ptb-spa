@@ -120,7 +120,7 @@ pipeline {
                     sh "curl -fsSL https://get.pulumi.com | sh"
                     sh "$HOME/.pulumi/bin/pulumi version"
 
-                    sh "curl -sL https://aka.ms/InstallAzureCLIDeb | sh"
+                    sh "curl -fsSL https://aka.ms/InstallAzureCLIDeb | bash"
 
                     withCredentials([azureServicePrincipal('AZURE_PRINCIPAL_LOGIN')]){
                         sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
