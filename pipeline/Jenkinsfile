@@ -102,7 +102,7 @@ pipeline {
                     }
                     withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB_CREDENTIALS', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                         sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
-                        sh 'docker push $DOCKER_IMAGE:us-spa'
+                        sh "docker push $DOCKER_IMAGE:v${env.VERSION}"
                     }
                 }
                 post {
