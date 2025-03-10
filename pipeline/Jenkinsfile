@@ -3,11 +3,7 @@ pipeline {
     agent any
 
     environment {
-        
         DOCKER_IMAGE = 'rdoneux/ptb-spa'
-        AZURE_STORAGE_CONNECTION_STRING = "<access-key>"
-
-
         // can use "pulumi stack -Q" to find this
         PULUMI_STACK = "organization/ptb-spa-iac/dev"
     }
@@ -112,43 +108,42 @@ pipeline {
                 }
             }
 
-            // stage ("Deploy") {
+            stage ("Deploy") {
 
-            //     when {
-            //         anyOf {
-            //             branch 'master';
-            //             // branch 'development'
-            //         }
-            //     }
+                when {
+                    anyOf {
+                        branch 'master';
+                    }
+                }
 
-            //     steps {
-            //         sh "curl -fsSL https://get.pulumi.com | sh"
-            //         sh "$HOME/.pulumi/bin/pulumi version"
+                steps {
+                    sh "curl -fsSL https://get.pulumi.com | sh"
+                    sh "$HOME/.pulumi/bin/pulumi version"
 
-            //         withCredentials([aws(credentialsId: "AWS_CREDENTIALS")]){
-            //             withEnv(["PATH+PULUMI=$HOME/.pulumi/bin"]) {
-            //                 sh "export AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}'"
-            //                 sh "pulumi login"
-            //                 dir("iac") {
-            //                     sh "npm i"
-            //                     sh "pulumi stack select ${PULUMI_STACK}"
-            //                     withCredentials([string(credentialsId: 'PULUMI_ENCRYPTION_KEY', variable: "PULUMI_CONFIG_PASSPHRASE")]) {
-            //                         sh "pulumi up --yes"
-            //                     }
-            //                 }  
-            //             }
+                    withCredentials([aws(credentialsId: "AWS_CREDENTIALS")]){
+                        withEnv(["PATH+PULUMI=$HOME/.pulumi/bin"]) {
+                            withCredentials([string(credentialsId: 'AZURE_STORAGE_CONNECTION_STRING', variable: "AZURE_STORAGE_CONNECTION_STRING")]) {
+                                sh "export AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}'"
+                            }
+                            sh "pulumi login"
+                            dir("iac") {
+                                sh "npm i"
+                                sh "pulumi stack select ${PULUMI_STACK}"
+                                sh "pulumi up --yes"
+                            }  
+                        }
 
-            //         }
-            //     }
-            //     post {
-            //         success {
-            //             echo "Deploy success"
-            //         }
-            //         failure {
-            //             echo "Deploy failure"
-            //         }
-            //     }
-            // }
+                    }
+                }
+                post {
+                    success {
+                        echo "Deploy success"
+                    }
+                    failure {
+                        echo "Deploy failure"
+                    }
+                }
+            }
         
     }
 
