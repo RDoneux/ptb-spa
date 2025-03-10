@@ -120,10 +120,12 @@ pipeline {
                     sh "curl -fsSL https://get.pulumi.com | sh"
                     sh "$HOME/.pulumi/bin/pulumi version"
 
+                    sh "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash"
+
                     withCredentials([azureServicePrincipal('AZURE_PRINCIPAL_LOGIN')]){
                         sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
                         sh 'az account set -s $AZURE_SUBSCRIPTION_ID'
-                        
+
                         withEnv(["PATH+PULUMI=$HOME/.pulumi/bin"]) {
                             withCredentials([string(credentialsId: 'AZURE_STORAGE_CONNECTION_STRING', variable: "AZURE_STORAGE_CONNECTION_STRING")]) {
                                 sh "export AZURE_STORAGE_CONNECTION_STRING='${AZURE_STORAGE_CONNECTION_STRING}'"
