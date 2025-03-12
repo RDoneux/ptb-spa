@@ -4,13 +4,16 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: #ffffffde;
   background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --text-colour: #dcdcdc;
+  --accent-colour: #ba7e3f;
 }
 
 body,
@@ -18,4 +21,8 @@ body,
   width: 100vw;
   height: 100vh;
   margin: 0;
+}
+
+a.active {
+  color: var(--accent-colour);
 }
